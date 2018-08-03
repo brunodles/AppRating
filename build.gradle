@@ -25,3 +25,7 @@ task("appRating") {
         getApp(developers)
     }
 }
+
+task assemble {
+
+}
