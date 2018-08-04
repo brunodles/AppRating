@@ -28,8 +28,8 @@ task appRating {
 
 task assemble {
     doLast {
-        def credentials = new File(project.projectDir, "google.json")
-        credentials.write(System.getenv("FIREBASE_CONFIG"))
-        println credentials.path
+        println "Write credentials to a file"
+        def credentials = new File(rootProject.projectDir, "google.json")
+        credentials.write(System.getenv('FIREBASE_CONFIG'))
     }
 }
