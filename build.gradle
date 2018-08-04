@@ -1,4 +1,3 @@
-
 buildscript {
     repositories {
         jcenter()
@@ -14,19 +13,19 @@ buildscript {
 String[][] developers = [
         ["Nubank", devId("Nubank")],
         ["Via Varejo", devId("Via+Varejo+S.A.")],
-        ["Itaú", cpl("igM4ChkKEzY2NzAyMzI4NDMwODIzNDExOTkQCBgDEhkKEzY2NzAyMzI4NDMwODIzNDExOTkQCBgDGAA%3D:S:ANO1ljJcHU4")],
-        ["Bradesco", devId("Banco+Bradesco+SA")],
-        ["Santander", devId("Banco+Santander+%28Brasil%29+S.A.")],
-        ["Inter", devId("Banco+Inter+SA")],
-        ["Banco do Brasil", devId("Banco+do+Brasil+SA")],
-        ["BV", devId("Banco+Votorantim+S/A")],
-        ["B2W", devId("B2W+Digital")],
-        ["Luiza Labs", cpl("igM4ChkKEzY5NjA2MTkyNjA3MzU5NjY2NzcQCBgDEhkKEzY5NjA2MTkyNjA3MzU5NjY2NzcQCBgDGAA%3D:S:ANO1ljIg2m0")],
-        ["Carrefour", search("Carrefour"), devId("Carrefour+Brasil"), devId("Banco+CSF+SA"), devId("CarrefourSA"), devId("Carrefour")],
-        ["GPA", devId("GPA")],
-        ["Wallmart", devId("Walmart.com")],
-        ["Caixa", devId("Caixa+Econ%C3%B4mica+Federal")],
-        ["Track", search("banco"), search("varejo"), search("loja")]
+//        ["Itaú", cpl("igM4ChkKEzY2NzAyMzI4NDMwODIzNDExOTkQCBgDEhkKEzY2NzAyMzI4NDMwODIzNDExOTkQCBgDGAA%3D:S:ANO1ljJcHU4")],
+//        ["Bradesco", devId("Banco+Bradesco+SA")],
+//        ["Santander", devId("Banco+Santander+%28Brasil%29+S.A.")],
+//        ["Inter", devId("Banco+Inter+SA")],
+//        ["Banco do Brasil", devId("Banco+do+Brasil+SA")],
+//        ["BV", devId("Banco+Votorantim+S/A")],
+//        ["B2W", devId("B2W+Digital")],
+//        ["Luiza Labs", cpl("igM4ChkKEzY5NjA2MTkyNjA3MzU5NjY2NzcQCBgDEhkKEzY5NjA2MTkyNjA3MzU5NjY2NzcQCBgDGAA%3D:S:ANO1ljIg2m0")],
+//        ["Carrefour", search("Carrefour"), devId("Carrefour+Brasil"), devId("Banco+CSF+SA"), devId("CarrefourSA"), devId("Carrefour")],
+//        ["GPA", devId("GPA")],
+//        ["Wallmart", devId("Walmart.com")],
+//        ["Caixa", devId("Caixa+Econ%C3%B4mica+Federal")],
+//        ["Track", search("banco"), search("varejo"), search("loja")]
 ]
 
 task appRating {
@@ -55,7 +54,7 @@ task assemble {
 
 task checkInternet {
     doLast {
-        def connection= new URL("https://play.google.com/store/apps").openConnection()
+        def connection = new URL("https://play.google.com/store/apps").openConnection()
         int response = connection.responseCode
         if (response != 200)
             throw new GradleScriptException("Error, can't check internet connection", null)
@@ -98,6 +97,8 @@ import java.util.regex.Pattern
 class RatingFetcher {
 
     static final idPattern = Pattern.compile(/\?id=(.*?)(?:&|$)/)
+    private static final String ENV_ROOT_REFERENCE = "FIREBASE_ROOT_REFERENCE"
+    private static final String RATINGS_REFERENCE = "ratings"
 
     private final String date = new SimpleDateFormat("yyyy-MM-dd").format(new Date())
     private final Set<String> done = new HashSet<>()
@@ -122,13 +123,16 @@ class RatingFetcher {
 
         def firebase = FirebaseApp.initializeApp(options, "Admin-" +
                 String.valueOf(new Random().nextLong()))
-        return FirebaseDatabase.getInstance(firebase).getReference(System.getenv("FIREBASE_ROOT_REFERENCE")
-                + "ratings")
+        def reference = FirebaseDatabase.getInstance(firebase)
+        if (System.getenv().containsKey(ENV_ROOT_REFERENCE))
+            return reference.getReference(System.getenv(ENV_ROOT_REFERENCE) + RATINGS_REFERENCE)
+        return reference.getReference(RATINGS_REFERENCE)
     }
 
     Observable<ApiFuture<Void>> appsMap() {
         return Observable.fromArray(developers)
                 .subscribeOn(Schedulers.computation())
+                .doOnNext { d -> println "Developer: ${d[0]}" }
                 .map { developer -> Arrays.copyOfRange(developer, 1, developer.length) }
                 .flatMap(Observable.&fromArray)
                 .flatMap(this.&developerApps)
