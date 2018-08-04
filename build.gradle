@@ -1,3 +1,5 @@
+import apprating.Fetch
+
 import static apprating.Fetch.*
 
 String[][] developers = [
@@ -22,7 +24,15 @@ task appRating {
     group "main"
 
     doLast {
-        getApp(developers)
+        def disposable = new Fetch(developers)
+                .appsMap()
+                .subscribe(
+                { r -> void },
+                { e -> e.printStackTrace() }
+        )
+
+        while (!disposable.isDisposed())
+            Thread.sleep(5000)
     }
 }
 

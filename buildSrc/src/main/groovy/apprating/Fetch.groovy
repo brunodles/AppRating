@@ -48,19 +48,7 @@ class Fetch {
                 + "ratings")
     }
 
-    static void getApp(String[][] developers) {
-        def disposable = new Fetch(developers)
-                .appsMap()
-                .subscribe(
-                { r -> void },
-                { e -> e.printStackTrace() }
-        )
-
-        while (!disposable.isDisposed())
-            Thread.sleep(5000)
-    }
-
-    private Observable<ApiFuture<Void>> appsMap() {
+    Observable<ApiFuture<Void>> appsMap() {
         return Observable.fromArray(developers)
                 .subscribeOn(Schedulers.computation())
                 .map { developer -> Arrays.copyOfRange(developer, 1, developer.length) }
