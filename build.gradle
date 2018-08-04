@@ -14,7 +14,7 @@ String[][] developers = [
         ["Nubank", devId("Nubank")],
         ["Via Varejo", devId("Via+Varejo+S.A.")],
         ["Itaú", cpl("igM4ChkKEzY2NzAyMzI4NDMwODIzNDExOTkQCBgDEhkKEzY2NzAyMzI4NDMwODIzNDExOTkQCBgDGAA%3D:S:ANO1ljJcHU4")],
-//        ["Bradesco", devId("Banco+Bradesco+SA")],
+        ["Bradesco", devId("Banco+Bradesco+SA")],
 //        ["Santander", devId("Banco+Santander+%28Brasil%29+S.A.")],
 //        ["Inter", devId("Banco+Inter+SA")],
 //        ["Banco do Brasil", devId("Banco+do+Brasil+SA")],
