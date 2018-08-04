@@ -42,7 +42,7 @@ class Fetch {
                 .setDatabaseUrl("https://brunodles-apprating.firebaseio.com/")
                 .build()
 
-        def firebase = FirebaseApp.initializeApp(options)
+        def firebase = FirebaseApp.initializeApp(options, "Admin-" + String.valueOf(Math.random().next().longValue()))
         return FirebaseDatabase.getInstance(firebase).getReference("ratings")
     }
 
