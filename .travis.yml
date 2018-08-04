@@ -25,7 +25,7 @@ before_install:
   - chmod +x gradlew
 
 script:
-  - ./gradlew clean appRating --info --stacktrace
+  - ./gradlew assemble appRating --info --stacktrace
 
 notifications:
   email: false

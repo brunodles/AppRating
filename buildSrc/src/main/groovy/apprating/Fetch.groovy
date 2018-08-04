@@ -22,32 +22,23 @@ import java.util.regex.Pattern
 class Fetch {
 
     static final idPattern = Pattern.compile(/\?id=(.*?)(?:&|$)/)
-    public static final String FIREBASE_ENV_KEY = "FIREBASE_CONFIG"
 
     private final Alchemist alchemist = new Alchemist()
     private final String date = new SimpleDateFormat("yyyy-MM-dd").format(new Date())
-    private final DatabaseReference ratings = buildRatingsReference
+    private final DatabaseReference ratings
     private final Set<String> done = new HashSet<>()
 
     private final String[][] developers
 
     Fetch(String[][] developers) {
         this.developers = developers
+        this.ratings = buildRatingsReference()
     }
 
-    static DatabaseReference getBuildRatingsReference() {
-        def firebaseConfig = System.getenv(FIREBASE_ENV_KEY)
-        final GoogleCredentials credentials
-        if (firebaseConfig != null && firebaseConfig.startsWith("{")) {
-            credentials = GoogleCredentials.getApplicationDefault()
-        } else {
-//            InputStream serviceAccount = new FileInputStream()
-            InputStream serviceAccount = getClass().getResourceAsStream("google.json")
-            credentials = GoogleCredentials.fromStream(serviceAccount)
-        }
-
+    static DatabaseReference buildRatingsReference() {
+        InputStream serviceAccount = new FileInputStream("google.json")
         FirebaseOptions options = new FirebaseOptions.Builder()
-                .setCredentials(credentials)
+                .setCredentials(GoogleCredentials.fromStream(serviceAccount))
                 .setDatabaseUrl("https://brunodles-apprating.firebaseio.com/")
                 .build()
 

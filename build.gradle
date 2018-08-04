@@ -18,7 +18,7 @@ String[][] developers = [
         ["Track", search("banco"), search("varejo"), search("loja")]
 ]
 
-task("appRating") {
+task appRating {
     group "main"
 
     doLast {
@@ -27,5 +27,9 @@ task("appRating") {
 }
 
 task assemble {
-
+    doLast {
+        def credentials = new File(project.projectDir, "google.json")
+        credentials.write(System.getenv("FIREBASE_CONFIG"))
+        println credentials.path
+    }
 }
