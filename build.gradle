@@ -13,20 +13,20 @@ buildscript {
 
 String[][] developers = [
         ["Nubank", devId("Nubank")],
-//        ["Via Varejo", devId("Via+Varejo+S.A.")],
-//        ["Itaú", cpl("igM4ChkKEzY2NzAyMzI4NDMwODIzNDExOTkQCBgDEhkKEzY2NzAyMzI4NDMwODIzNDExOTkQCBgDGAA%3D:S:ANO1ljJcHU4")],
-//        ["Bradesco", devId("Banco+Bradesco+SA")],
-//        ["Santander", devId("Banco+Santander+%28Brasil%29+S.A.")],
-//        ["Inter", devId("Banco+Inter+SA")],
-//        ["Banco do Brasil", devId("Banco+do+Brasil+SA")],
-//        ["BV", devId("Banco+Votorantim+S/A")],
-//        ["B2W", devId("B2W+Digital")],
-//        ["Luiza Labs", cpl("igM4ChkKEzY5NjA2MTkyNjA3MzU5NjY2NzcQCBgDEhkKEzY5NjA2MTkyNjA3MzU5NjY2NzcQCBgDGAA%3D:S:ANO1ljIg2m0")],
-//        ["Carrefour", search("Carrefour"), devId("Carrefour+Brasil"), devId("Banco+CSF+SA"), devId("CarrefourSA"), devId("Carrefour")],
-//        ["GPA", devId("GPA")],
-//        ["Wallmart", devId("Walmart.com")],
-//        ["Caixa", devId("Caixa+Econ%C3%B4mica+Federal")],
-//        ["Track", search("banco"), search("varejo"), search("loja")]
+        ["Via Varejo", devId("Via+Varejo+S.A.")],
+        ["Itaú", cpl("igM4ChkKEzY2NzAyMzI4NDMwODIzNDExOTkQCBgDEhkKEzY2NzAyMzI4NDMwODIzNDExOTkQCBgDGAA%3D:S:ANO1ljJcHU4")],
+        ["Bradesco", devId("Banco+Bradesco+SA")],
+        ["Santander", devId("Banco+Santander+%28Brasil%29+S.A.")],
+        ["Inter", devId("Banco+Inter+SA")],
+        ["Banco do Brasil", devId("Banco+do+Brasil+SA")],
+        ["BV", devId("Banco+Votorantim+S/A")],
+        ["B2W", devId("B2W+Digital")],
+        ["Luiza Labs", cpl("igM4ChkKEzY5NjA2MTkyNjA3MzU5NjY2NzcQCBgDEhkKEzY5NjA2MTkyNjA3MzU5NjY2NzcQCBgDGAA%3D:S:ANO1ljIg2m0")],
+        ["Carrefour", search("Carrefour"), devId("Carrefour+Brasil"), devId("Banco+CSF+SA"), devId("CarrefourSA"), devId("Carrefour")],
+        ["GPA", devId("GPA")],
+        ["Wallmart", devId("Walmart.com")],
+        ["Caixa", devId("Caixa+Econ%C3%B4mica+Federal")],
+        ["Track", search("banco"), search("varejo"), search("loja")]
 ]
 
 task appRating {
