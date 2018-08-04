@@ -33,3 +33,13 @@ task assemble {
         credentials.write(System.getenv('FIREBASE_CONFIG'))
     }
 }
+
+task checkInternet {
+    doLast {
+        def connection= new URL("https://play.google.com/store/apps").openConnection()
+        int response = connection.responseCode
+        if (response != 200)
+            throw new GradleScriptException("Error, can't check internet connection", null)
+        println "Internet is available"
+    }
+}
