@@ -42,8 +42,10 @@ class Fetch {
                 .setDatabaseUrl("https://brunodles-apprating.firebaseio.com/")
                 .build()
 
-        def firebase = FirebaseApp.initializeApp(options, "Admin-" + String.valueOf(Math.random().next().longValue()))
-        return FirebaseDatabase.getInstance(firebase).getReference("ratings")
+        def firebase = FirebaseApp.initializeApp(options, "Admin-" +
+                String.valueOf(Math.random().next().longValue()))
+        return FirebaseDatabase.getInstance(firebase).getReference(System.getenv("FIREBASE_ROOT_REFERENCE")
+                + "ratings")
     }
 
     static void getApp(String[][] developers) {
@@ -101,7 +103,8 @@ class Fetch {
             map.put("ratting", appDetails.rating())
             map.put("name", appDetails.name())
         } catch (Exception e) {
-            new Exception("Failed to get details for \"${app.title()}\" using \"${appDetailsUrl}\".", e).printStackTrace()
+            new Exception("Failed to get details for \"${app.title()}\" using \"${appDetailsUrl}\".", e)
+                    .printStackTrace()
         }
         return map
     }
