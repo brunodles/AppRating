@@ -12,27 +12,34 @@ buildscript {
 
 String[][] developers = [
         ["Nubank", devId("Nubank")],
-        ["Via Varejo", devId("Via+Varejo+S.A.")],
-        ["Itaú", cpl("igM4ChkKEzY2NzAyMzI4NDMwODIzNDExOTkQCBgDEhkKEzY2NzAyMzI4NDMwODIzNDExOTkQCBgDGAA%3D:S:ANO1ljJcHU4")],
-        ["Bradesco", devId("Banco+Bradesco+SA")],
-        ["Santander", devId("Banco+Santander+%28Brasil%29+S.A.")],
-        ["Inter", devId("Banco+Inter+SA")],
-        ["Banco do Brasil", devId("Banco+do+Brasil+SA")],
-        ["BV", devId("Banco+Votorantim+S/A")],
-        ["B2W", devId("B2W+Digital")],
-        ["Luiza Labs", cpl("igM4ChkKEzY5NjA2MTkyNjA3MzU5NjY2NzcQCBgDEhkKEzY5NjA2MTkyNjA3MzU5NjY2NzcQCBgDGAA%3D:S:ANO1ljIg2m0")],
-        ["GPA", devId("GPA")],
-        ["Caixa", devId("Caixa+Econ%C3%B4mica+Federal")],
+//        ["Via Varejo", devId("Via+Varejo+S.A.")],
+//        ["Itaú", cpl("igM4ChkKEzY2NzAyMzI4NDMwODIzNDExOTkQCBgDEhkKEzY2NzAyMzI4NDMwODIzNDExOTkQCBgDGAA%3D:S:ANO1ljJcHU4")],
+//        ["Bradesco", devId("Banco+Bradesco+SA")],
+//        ["Santander", devId("Banco+Santander+%28Brasil%29+S.A.")],
+//        ["Inter", devId("Banco+Inter+SA")],
+//        ["Banco do Brasil", devId("Banco+do+Brasil+SA")],
+//        ["BV", devId("Banco+Votorantim+S/A")],
+//        ["B2W", devId("B2W+Digital")],
+//        ["Luiza Labs", cpl("igM4ChkKEzY5NjA2MTkyNjA3MzU5NjY2NzcQCBgDEhkKEzY5NjA2MTkyNjA3MzU5NjY2NzcQCBgDGAA%3D:S:ANO1ljIg2m0")],
+//        ["GPA", devId("GPA")],
+//        ["Caixa", devId("Caixa+Econ%C3%B4mica+Federal")],
 //        ["Carrefour", search("Carrefour"), devId("Carrefour+Brasil"), devId("Banco+CSF+SA"), devId("CarrefourSA"), devId("Carrefour")],
 //        ["Wallmart", devId("Walmart.com")],
-        ["Track", search("banco"), search("varejo"), search("loja")]
 ]
+
+final String ENV_ROOT_REFERENCE = "FIREBASE_ROOT_REFERENCE"
 
 task appRating {
     group "main"
 
     doLast {
-        def disposable = new RatingFetcher(developers, this.getClass().getClassLoader())
+        List<String> referencesList = new ArrayList<String>()
+        referencesList.add('git rev-parse --abbrev-ref HEAD'.execute().text.trim())
+        if (System.getenv().containsKey(ENV_ROOT_REFERENCE))
+            referencesList.add(System.getenv(ENV_ROOT_REFERENCE))
+        String[] rootReferences = referencesList.toArray(new String[referencesList.size()])
+
+        def disposable = new RatingFetcher(developers, this.getClass().getClassLoader(), rootReferences)
                 .appsMap()
                 .subscribe(
                 { r -> void },
@@ -97,7 +104,6 @@ import java.util.regex.Pattern
 class RatingFetcher {
 
     static final idPattern = Pattern.compile(/\?id=(.*?)(?:&|$)/)
-    private static final String ENV_ROOT_REFERENCE = "FIREBASE_ROOT_REFERENCE"
     private static final String RATINGS_REFERENCE = "ratings"
 
     private final String date = new SimpleDateFormat("yyyy-MM-dd").format(new Date())
@@ -105,16 +111,18 @@ class RatingFetcher {
     private final DatabaseReference ratings
     private final Alchemist alchemist
     private final String[][] developers
+    private final String[] rootReferences
 
-    RatingFetcher(String[][] developers, ClassLoader classLoader) {
+    RatingFetcher(String[][] developers, ClassLoader classLoader, String... rootReferences) {
         this.developers = developers
+        this.rootReferences = rootReferences
         this.ratings = buildRatingsReference()
         alchemist = new Alchemist.Builder()
                 .classLoader(classLoader)
                 .build()
     }
 
-    static DatabaseReference buildRatingsReference() {
+    private DatabaseReference buildRatingsReference() {
         InputStream serviceAccount = new FileInputStream("google.json")
         FirebaseOptions options = new FirebaseOptions.Builder()
                 .setCredentials(GoogleCredentials.fromStream(serviceAccount))
@@ -124,9 +132,14 @@ class RatingFetcher {
         def firebase = FirebaseApp.initializeApp(options, "Admin-" +
                 String.valueOf(new Random().nextLong()))
         def reference = FirebaseDatabase.getInstance(firebase)
-        if (System.getenv().containsKey(ENV_ROOT_REFERENCE))
-            return reference.getReference(System.getenv(ENV_ROOT_REFERENCE) + RATINGS_REFERENCE)
-        return reference.getReference(RATINGS_REFERENCE)
+        return reference.getReference(buildRootReferenceName())
+    }
+
+    private String buildRootReferenceName() {
+        List<String> references = new ArrayList<String>()
+        references.addAll(rootReferences)
+        references.add(RATINGS_REFERENCE)
+        return references.join("-")
     }
 
     Observable<ApiFuture<Void>> appsMap() {
