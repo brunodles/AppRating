@@ -42,7 +42,7 @@ task appRating {
         def disposable = new RatingFetcher(developers, this.getClass().getClassLoader(), rootReferences)
                 .appsMap()
                 .subscribe(
-                { r -> void },
+                { println "Sent: " + it.name },
                 { e -> e.printStackTrace() }
         )
 
@@ -149,9 +149,9 @@ class RatingFetcher {
                 .map { developer -> Arrays.copyOfRange(developer, 1, developer.length) }
                 .flatMap(Observable.&fromArray)
                 .flatMap(this.&developerApps)
-                .doOnNext { println "Prepare to send ${it.title()}" }
+                .doOnNext { println "App: ${it.title()}" }
                 .map(this.&mapToMap)
-                .map { m -> ratings.child("${date}/${m.appId}".replaceAll(/[.#$\[\]]/, "-")).setValueAsync(m) }
+                .doOnNext { m -> ratings.child("${date}/${m.appId}".replaceAll(/[.#$\[\]]/, "-")).setValueAsync(m) }
     }
 
     private Observable<App> developerApps(String url) {
