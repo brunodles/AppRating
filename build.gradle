@@ -139,6 +139,7 @@ class RatingFetcher {
         List<String> references = new ArrayList<String>()
         references.addAll(rootReferences)
         references.add(RATINGS_REFERENCE)
+        references.removeAll { it.isEmpty() }
         return references.join("-")
     }
 
