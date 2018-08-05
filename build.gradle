@@ -24,7 +24,7 @@ String[][] developers = [
 //        ["GPA", devId("GPA")],
 //        ["Caixa", devId("Caixa+Econ%C3%B4mica+Federal")],
         ["Carrefour", search("Carrefour"), devId("CarrefourSA"), devId("Carrefour")],
-//        ["Wallmart", devId("Walmart.com")],
+        ["Wallmart", devId("Walmart.com")],
 ]
 
 final String ENV_ROOT_REFERENCE = "FIREBASE_ROOT_REFERENCE"
