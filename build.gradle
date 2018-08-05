@@ -11,7 +11,7 @@ buildscript {
 }
 
 String[][] developers = [
-        ["Nubank", devId("Nubank")],
+//        ["Nubank", devId("Nubank")],
 //        ["Via Varejo", devId("Via+Varejo+S.A.")],
 //        ["Itaú", cpl("igM4ChkKEzY2NzAyMzI4NDMwODIzNDExOTkQCBgDEhkKEzY2NzAyMzI4NDMwODIzNDExOTkQCBgDGAA%3D:S:ANO1ljJcHU4")],
 //        ["Bradesco", devId("Banco+Bradesco+SA")],
@@ -23,7 +23,7 @@ String[][] developers = [
 //        ["Luiza Labs", cpl("igM4ChkKEzY5NjA2MTkyNjA3MzU5NjY2NzcQCBgDEhkKEzY5NjA2MTkyNjA3MzU5NjY2NzcQCBgDGAA%3D:S:ANO1ljIg2m0")],
 //        ["GPA", devId("GPA")],
 //        ["Caixa", devId("Caixa+Econ%C3%B4mica+Federal")],
-//        ["Carrefour", search("Carrefour"), devId("Carrefour+Brasil"), devId("Banco+CSF+SA"), devId("CarrefourSA"), devId("Carrefour")],
+        ["Carrefour", search("Carrefour"), devId("Carrefour+Brasil"), devId("Banco+CSF+SA"), devId("CarrefourSA"), devId("Carrefour")],
 //        ["Wallmart", devId("Walmart.com")],
 ]
 
