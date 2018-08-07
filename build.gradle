@@ -11,35 +11,39 @@ buildscript {
 }
 
 String[][] developers = [
-//        ["Nubank", devId("Nubank")],
-//        ["Via Varejo", devId("Via+Varejo+S.A.")],
-//        ["Itaú", cpl("igM4ChkKEzY2NzAyMzI4NDMwODIzNDExOTkQCBgDEhkKEzY2NzAyMzI4NDMwODIzNDExOTkQCBgDGAA%3D:S:ANO1ljJcHU4")],
-//        ["Bradesco", devId("Banco+Bradesco+SA")],
-//        ["Santander", devId("Banco+Santander+%28Brasil%29+S.A.")],
-//        ["Inter", devId("Banco+Inter+SA")],
-//        ["Banco do Brasil", devId("Banco+do+Brasil+SA")],
-//        ["BV", devId("Banco+Votorantim+S/A")],
-//        ["B2W", devId("B2W+Digital")],
-//        ["Luiza Labs", cpl("igM4ChkKEzY5NjA2MTkyNjA3MzU5NjY2NzcQCBgDEhkKEzY5NjA2MTkyNjA3MzU5NjY2NzcQCBgDGAA%3D:S:ANO1ljIg2m0")],
-//        ["GPA", devId("GPA")],
-//        ["Caixa", devId("Caixa+Econ%C3%B4mica+Federal")],
+        ["Nubank", devId("Nubank")],
+        ["Via Varejo", devId("Via+Varejo+S.A.")],
+        ["Itaú", cpl("igM4ChkKEzY2NzAyMzI4NDMwODIzNDExOTkQCBgDEhkKEzY2NzAyMzI4NDMwODIzNDExOTkQCBgDGAA%3D:S:ANO1ljJcHU4")],
+        ["Bradesco", devId("Banco+Bradesco+SA")],
+        ["Santander", devId("Banco+Santander+%28Brasil%29+S.A.")],
+        ["Inter", devId("Banco+Inter+SA")],
+        ["Banco do Brasil", devId("Banco+do+Brasil+SA")],
+        ["BV", devId("Banco+Votorantim+S/A")],
+        ["B2W", devId("B2W+Digital")],
+        ["Luiza Labs", cpl("igM4ChkKEzY5NjA2MTkyNjA3MzU5NjY2NzcQCBgDEhkKEzY5NjA2MTkyNjA3MzU5NjY2NzcQCBgDGAA%3D:S:ANO1ljIg2m0")],
+        ["GPA", devId("GPA")],
+        ["Caixa", devId("Caixa+Econ%C3%B4mica+Federal")],
         ["Carrefour", search("Carrefour"), devId("CarrefourSA"), devId("Carrefour")],
+        ["CVC", devId("CVC+Brasil")],
         ["Wallmart", devId("Walmart.com")],
 ]
 
 final String ENV_ROOT_REFERENCE = "FIREBASE_ROOT_REFERENCE"
 
 task appRating {
+
     group "main"
 
     doLast {
         List<String> referencesList = new ArrayList<String>()
-        referencesList.add('git rev-parse --abbrev-ref HEAD'.execute().text.trim())
         if (System.getenv().containsKey(ENV_ROOT_REFERENCE))
             referencesList.add(System.getenv(ENV_ROOT_REFERENCE))
-        String[] rootReferences = referencesList.toArray(new String[referencesList.size()])
+        referencesList.add("rattings")
+        referencesList.removeAll { it == null || it.isEmpty() }
+        String rootReferenceName = referencesList.join("-")
 
-        def disposable = new RatingFetcher(developers, this.getClass().getClassLoader(), rootReferences)
+        def disposable = new RatingFetcher(developers, this.getClass().getClassLoader(),
+                new DataBase(rootReferenceName))
                 .appsMap()
                 .subscribe(
                 { println "Sent: " + it.name },
@@ -69,6 +73,59 @@ task checkInternet {
     }
 }
 
+task fixRatings {
+    doLast {
+
+        def base = new DataBase()
+        base.reference.child("HEAD-ci-ratings/2018-08-07").addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            void onDataChange(DataSnapshot snapshot) {
+                base.reference.child("ci-ratings/2018-08-06").setValue(snapshot.value)
+            }
+
+            @Override
+            void onCancelled(DatabaseError error) {
+
+            }
+        })
+    }
+}
+
+task listApps {
+    doLast {
+
+        final Set<String> done = new HashSet<>()
+
+        def alchemist = new Alchemist.Builder()
+                .classLoader(this.getClass().getClassLoader())
+                .build()
+
+        def appsReference = new DataBase("apps").reference
+
+        def disposable = Observable.fromArray(developers)
+                .subscribeOn(Schedulers.computation())
+                .map { developer -> Arrays.copyOfRange(developer, 1, developer.length) }
+                .flatMap(Observable.&fromArray)
+                .flatMap {
+            Observable.just(alchemist.parseUrl(it, Developer.class))
+                    .subscribeOn(Schedulers.io())
+                    .flatMap { Observable.fromIterable(it.apps()) }
+                    .filter { App app -> !done.contains(app.detailsUrl()) }
+                    .doOnNext { m -> done.add(m.detailsUrl()) }
+        }.map { it.detailsUrl() }
+                .map { it.replace("/store/apps/details?id=", "") }
+                .doOnNext { appsReference.child(it.replaceAll(/[.#$\[\]]/, "-")).setValue(it) }
+                .subscribe(
+                { println it },
+                { it.printStackTrace() }
+        )
+
+
+        while (!disposable.isDisposed())
+            Thread.sleep(5000)
+    }
+}
+
 
 static String devId(String id) {
     return "https://play.google.com/store/apps/developer?id=$id"
@@ -82,6 +139,7 @@ static String search(String query) {
     return "https://play.google.com/store/search?c=apps&q=$query"
 }
 
+
 import com.brunodles.alchemist.Alchemist
 import com.brunodles.alchemist.collectors.AttrCollector
 import com.brunodles.alchemist.collectors.TextCollector
@@ -92,37 +150,25 @@ import com.google.api.core.ApiFuture
 import com.google.auth.oauth2.GoogleCredentials
 import com.google.firebase.FirebaseApp
 import com.google.firebase.FirebaseOptions
-import com.google.firebase.database.DatabaseReference
-import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.*
 import io.reactivex.Observable
 import io.reactivex.schedulers.Schedulers
 
 import java.text.SimpleDateFormat
 import java.util.regex.Pattern
 
-@SuppressWarnings("GroovyUnusedDeclaration")
-class RatingFetcher {
+class DataBase {
+    final DatabaseReference reference
 
-    static final idPattern = Pattern.compile(/\?id=(.*?)(?:&|$)/)
-    private static final String RATINGS_REFERENCE = "ratings"
-
-    private final String date = new SimpleDateFormat("yyyy-MM-dd").format(new Date())
-    private final Set<String> done = new HashSet<>()
-    private final DatabaseReference ratings
-    private final Alchemist alchemist
-    private final String[][] developers
-    private final String[] rootReferences
-
-    RatingFetcher(String[][] developers, ClassLoader classLoader, String... rootReferences) {
-        this.developers = developers
-        this.rootReferences = rootReferences
-        this.ratings = buildRatingsReference()
-        alchemist = new Alchemist.Builder()
-                .classLoader(classLoader)
-                .build()
+    DataBase() {
+        this(null)
     }
 
-    private DatabaseReference buildRatingsReference() {
+    DataBase(String rootReferenceName) {
+        this.reference = buildRatingsReference(rootReferenceName)
+    }
+
+    private static DatabaseReference buildRatingsReference(String rootReferenceName) {
         InputStream serviceAccount = new FileInputStream("google.json")
         FirebaseOptions options = new FirebaseOptions.Builder()
                 .setCredentials(GoogleCredentials.fromStream(serviceAccount))
@@ -132,15 +178,33 @@ class RatingFetcher {
         def firebase = FirebaseApp.initializeApp(options, "Admin-" +
                 String.valueOf(new Random().nextLong()))
         def reference = FirebaseDatabase.getInstance(firebase)
-        return reference.getReference(buildRootReferenceName())
+        if (rootReferenceName == null)
+            return reference.getReference()
+        return reference.getReference(rootReferenceName)
     }
 
-    private String buildRootReferenceName() {
-        List<String> references = new ArrayList<String>()
-        references.addAll(rootReferences)
-        references.add(RATINGS_REFERENCE)
-        references.removeAll { it.isEmpty() }
-        return references.join("-")
+    DatabaseReference child(String path) {
+        return reference.child(path)
+    }
+}
+
+@SuppressWarnings("GroovyUnusedDeclaration")
+class RatingFetcher {
+
+    static final idPattern = Pattern.compile(/\?id=(.*?)(?:&|$)/)
+
+    private final String date = new SimpleDateFormat("yyyy-MM-dd").format(new Date())
+    private final Set<String> done = new HashSet<>()
+    private final Alchemist alchemist
+    private final String[][] developers
+    private final DataBase dataBase
+
+    RatingFetcher(String[][] developers, ClassLoader classLoader, DataBase dataBase) {
+        this.developers = developers
+        this.dataBase = dataBase
+        alchemist = new Alchemist.Builder()
+                .classLoader(classLoader)
+                .build()
     }
 
     Observable<ApiFuture<Void>> appsMap() {
@@ -152,7 +216,7 @@ class RatingFetcher {
                 .flatMap(this.&developerApps)
                 .doOnNext { println "App: ${it.title()}" }
                 .map(this.&mapToMap)
-                .doOnNext { m -> ratings.child("${date}/${m.appId}".replaceAll(/[.#$\[\]]/, "-")).setValueAsync(m) }
+                .doOnNext { m -> dataBase.child("${date}/${m.appId}".replaceAll(/[.#$\[\]]/, "-")).setValueAsync(m) }
     }
 
     private Observable<App> developerApps(String url) {
@@ -166,7 +230,7 @@ class RatingFetcher {
 
     private Map<String, Object> mapToMap(App app) {
         def map = new HashMap<String, Object>()
-//        def appRef = ratings.getReference("${date}/${empresa[0]}/${app.title()}")
+//        def appRef = reference.getReference("${date}/${empresa[0]}/${app.title()}")
         String appDetailsUrl = "https://play.google.com" + app.detailsUrl()
 
         map.put("name", app.title())
