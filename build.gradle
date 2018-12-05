@@ -91,6 +91,44 @@ task fixRatings {
     }
 }
 
+task toCsv {
+    doLast {
+        def database = new DataBase()
+        def contentHolders = ['ci-ratings', 'HEAD-ci-ratings', 'rattings']
+
+        def output = new File("AppRating.csv")
+        output.createNewFile()
+        output.append("Date, App ID / Package, Cover Image Url, Name, Rating\n")
+
+        contentHolders.each { name ->
+            println "Fetch content for $name"
+            database.reference.child(name).addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                void onDataChange(DataSnapshot snapshot) {
+                    snapshot.children.forEach { dayReference ->
+                        def date = dayReference.key
+                        dayReference.children.forEach { appReference ->
+                            def app = appReference.getValue()
+                            String rating = app.ratting
+                            if (rating != null)
+                                rating = rating.replaceAll("\\.", ",")
+
+                            output.append("$date, ${app.appId}, ${app.coverImageUrl}, ${app.name}, \"${rating}\"\n")
+                        }
+                    }
+                }
+
+                @Override
+                void onCancelled(DatabaseError error) {
+                    println error
+                }
+            })
+        }
+
+        Thread.sleep(10000)
+    }
+}
+
 task listApps {
     doLast {
 
